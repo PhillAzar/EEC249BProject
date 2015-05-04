@@ -28,7 +28,9 @@ public class BluetoothRecordToken extends RecordToken {
      */
     public BluetoothRecordToken() {
         super();
-        // TODO: Anything special here?
     }
+    
+    
 
+    
 }

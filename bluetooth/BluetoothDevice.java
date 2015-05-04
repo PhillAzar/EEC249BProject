@@ -6,11 +6,15 @@ package ptolemy.domains.wireless.lib.bluetooth;
 ///////////////////////////////////////////////////////////////////
 ////BluetoothDevice
 
+import java.util.HashSet;
+
 import ptolemy.actor.TypedAtomicActor;
 import ptolemy.actor.TypedIOPort;
 import ptolemy.data.RecordToken;
+import ptolemy.data.StringToken;
 import ptolemy.data.Token;
 import ptolemy.data.expr.StringParameter;
+import ptolemy.data.type.BaseType;
 import ptolemy.domains.wireless.kernel.WirelessDirector;
 import ptolemy.domains.wireless.kernel.WirelessIOPort;
 import ptolemy.kernel.CompositeEntity;
@@ -44,7 +48,6 @@ enum States {
     STATE_CONNECTED,
     STATE_SCANNING,
     STATE_OFF,
-    STATE_ON
 }
 
 public class BluetoothDevice extends TypedAtomicActor {
@@ -62,6 +65,7 @@ public class BluetoothDevice extends TypedAtomicActor {
         super(container, name);
         
         state = States.STATE_OFF;
+        _knownDevices = new HashSet<String>();
         
         wirelessInputChannelName = new StringParameter(this, "wirelessInputChannelName");
         wirelessInputChannelName.setExpression("WirelessInputChannel");
@@ -71,6 +75,9 @@ public class BluetoothDevice extends TypedAtomicActor {
         
         wiredInput = new TypedIOPort(this, "Wired Input", true, false);
         wiredOutput = new TypedIOPort(this, "Wired Output", false, true);
+        
+        wiredInput.setTypeEquals(BaseType.RECORD);
+        wiredOutput.setTypeEquals(BaseType.GENERAL);
         
         wirelessInput = new WirelessIOPort(this, "Wireless Input", true, false);
         wirelessInput.outsideChannel.setExpression("$wirelessInputChannelName");
@@ -136,17 +143,7 @@ public class BluetoothDevice extends TypedAtomicActor {
      */
     public void fire() throws IllegalActionException {
         super.fire();
-        
-        /**
-         * The following switch case structure is the state machine that controls the main dyanmics of the
-         * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
-         * perform actions. Each fire() will only evaluate one input, with the wired input, in this case, taking
-         * priority over the wireless input. The wireless input will evaluate with priority ONLY when the device is
-         * in the connected state. The only exception to this case is when a record token with a disconnect command
-         * is received to the wired input.
-         * 
-         * TODO: Work in Progress state machine
-         */
+
         RecordToken _wiredInputToken = new RecordToken();
         RecordToken _wirelessInputToken = new RecordToken();
         
@@ -161,33 +158,74 @@ public class BluetoothDevice extends TypedAtomicActor {
             _wirelessInputToken = (RecordToken) wirelessInput.get(0);
         }
         
+        BluetoothWiredCommandToken command = (BluetoothWiredCommandToken) _wiredInputToken.get("command");
+        if (command == null){
+            throw new IllegalActionException("Command is null?");
+        }
         
+        /**
+         * The following switch case structure is the state machine that controls the main dynamics of the
+         * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
+         * perform actions. Each fire() will only evaluate one input, with the wired input, in this case, taking
+         * priority over the wireless input. The wireless input will evaluate with priority ONLY when the device is
+         * in the connected state. The only exception to this case is when a record token with a disconnect command
+         * is received to the wired input.
+         * 
+         * TODO: Work in Progress state machine
+         */
+        BluetoothStatusToken status = new BluetoothStatusToken();
+        status.setStatusValue(BluetoothStatus.STATUS_OK);
+
         switch(state){
             case STATE_OFF:
-                if (_wiredInputToken.get("command").equals(BluetoothCommands.COMMAND_SWITCHON)){
-                    this.state = States.STATE_ON;
-                    this.wiredOutput.send(0, new BluetoothStatusToken(BluetoothStatus.STATUS_OK));
+                if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHON)){
+                    this.state = States.STATE_IDLE;
+                }
+                else {
+                    return;
                 }
                 break;
-            case STATE_ON:
-                
-                break;
             case STATE_IDLE:
-                
+                if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                    this.state = States.STATE_OFF;
+                }
+                else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SCAN)){
+                    this.state = States.STATE_SCANNING;
+                }
+                else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_CONNECT)){
+                    
+                }
+                else {
+                    status.setStatusValue(BluetoothStatus.STATUS_ERROR);
+                }
                 break;
             case STATE_CONNECTED:
                 
                 break;
             case STATE_SCANNING:
+                if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                    this.state = States.STATE_OFF;
+                }
+                else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_STOPSCAN)){
+                    this.state = States.STATE_IDLE;
+                }
+                
+                if (_wirelessInputToken != null){
+                    Token _response = _wirelessInputToken.get("response");
+                    // TODO: Check response - if its a go, register this with a list of known bluetooth devices
+                }
+                
                 
                 break;
             default:
-                
+                status.setStatusValue(BluetoothStatus.STATUS_ERROR);
                 break;
-        
-    }
-        
+        }
+        this.wiredOutput.send(0, status);
     }
     
-    //TODO: Actor skeleton.
+    ///////////////////////////////////////////////////////////////////
+    ////                         private variables                 ////
+    
+    private HashSet<String> _knownDevices;
 }

@@ -11,22 +11,59 @@ import ptolemy.kernel.util.IllegalActionException;
  * @author Phill
  *
  */
-public class BluetoothStatusToken extends Token {
+public class BluetoothWiredCommandToken extends Token {
 
-    public BluetoothStatusToken(BluetoothStatus status){
-        this._status = status;
+    public BluetoothWiredCommandToken(BluetoothWiredCommand command){
+        this._command = command;
     }
     
-    public BluetoothStatusToken(){}
-    
-    public BluetoothStatus getStatusValue(){
-        return this._status;
+    public BluetoothWiredCommand getCommandValue(){
+        return this._command;
+    }
+
+    @Override
+    public String toString() {
+        switch(this._command){
+            case COMMAND_CONNECT:
+                return "CONNECT";
+            case COMMAND_DISCONNECT:
+                return "DISCONNECT";
+            case COMMAND_SCAN:
+                return "SCAN";
+            case COMMAND_SWITCHOFF:
+                return "SWITCHOFF";
+            case COMMAND_SWITCHON:
+                return "SWITCHON";
+            case COMMAND_TRANSMIT:
+                return "TRANSMIT";
+            default:
+                return "nil";        
+        }
     }
     
-    public void setStatusValue(BluetoothStatus status){
-        this._status = status;
+    @Override
+    public BooleanToken isCloseTo(Token token, double epsilon)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
-    
+
+    @Override
+    public BooleanToken isEqualTo(Token rightArgument)
+            throws IllegalActionException {
+        if (rightArgument instanceof BluetoothWiredCommandToken){
+            BluetoothWiredCommandToken right = (BluetoothWiredCommandToken) rightArgument;
+            if (this._command == right.getCommandValue()){
+                return new BooleanToken(true);
+            }
+            else {
+                return new BooleanToken(false);
+            }
+        }
+        else {
+            throw new IllegalActionException("The argument must be of type BluetoothWiredCommandToken");
+        }
+    }
+
     @Override
     public Token add(Token rightArgument) throws IllegalActionException {
         throw new IllegalActionException("Action unsupported");
@@ -46,34 +83,6 @@ public class BluetoothStatusToken extends Token {
     public Token divideReverse(Token leftArgument)
             throws IllegalActionException {
         throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public BooleanToken isCloseTo(Token token, double epsilon)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public BooleanToken isEqualTo(Token rightArgument)
-            throws IllegalActionException {
-        if (rightArgument instanceof BluetoothStatusToken){
-            BluetoothStatusToken right = (BluetoothStatusToken) rightArgument;
-            if (this._status == right.getStatusValue()){
-                return new BooleanToken(true);
-            }
-            else {
-                return new BooleanToken(false);
-            }
-        }
-        else {
-            throw new IllegalActionException("The argument must be of type BluetoothStatusToken");
-        }
-    }
-
-    @Override
-    public boolean isNil() {
-        return super.isNil();
     }
 
     @Override
@@ -113,22 +122,10 @@ public class BluetoothStatusToken extends Token {
             throws IllegalActionException {
         throw new IllegalActionException("Action unsupported");
     }
-
-    @Override
-    public String toString() {
-        switch (_status){
-        case STATUS_ERROR:
-            return "ERROR";
-        case STATUS_OK:
-            return "OK";
-        default:
-            return "nil"; 
-        }
-    }
     
     ///////////////////////////////////////////////////////////////////
     ////                         private variables                 ////
     
-    private BluetoothStatus _status;
-
+    private final BluetoothWiredCommand _command;
+    
 }

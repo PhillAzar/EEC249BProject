@@ -11,22 +11,58 @@ import ptolemy.kernel.util.IllegalActionException;
  * @author Phill
  *
  */
-public class BluetoothStatusToken extends Token {
+public class BluetoothWirelessCommandToken extends Token {
+    
+    public BluetoothWirelessCommandToken(BluetoothWirelessCommand command, String deviceIdentifier){
+        this._command = command;
+        this._deviceIdentifier = deviceIdentifier;
+    }
+    
+    public BluetoothWirelessCommand getCommandValue(){
+        return this._command;
+    }
+    
+    public String getIdentifier(){
+        return this._deviceIdentifier;
+    }
 
-    public BluetoothStatusToken(BluetoothStatus status){
-        this._status = status;
+    @Override
+    public String toString() {
+        switch(this._command){
+        case COMMAND_DISCONNECT:
+            return "DISCONNECT";
+        case COMMAND_REQUESTCONNECT:
+            return "CONNECT";
+        case COMMAND_REQUESTPAIR:
+            return "PAIR";
+        default:
+            return "nil";
+        }
     }
     
-    public BluetoothStatusToken(){}
-    
-    public BluetoothStatus getStatusValue(){
-        return this._status;
+    @Override
+    public BooleanToken isCloseTo(Token token, double epsilon)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
-    
-    public void setStatusValue(BluetoothStatus status){
-        this._status = status;
+
+    @Override
+    public BooleanToken isEqualTo(Token rightArgument)
+            throws IllegalActionException {
+        if (rightArgument instanceof BluetoothWirelessCommandToken){
+            BluetoothWirelessCommandToken right = (BluetoothWirelessCommandToken) rightArgument;
+            if (this._command == right.getCommandValue()){
+                return new BooleanToken(true);
+            }
+            else {
+                return new BooleanToken(false);
+            }
+        }
+        else {
+            throw new IllegalActionException("The argument must be of type BluetoothWirelessCommandToken");
+        }
     }
-    
+
     @Override
     public Token add(Token rightArgument) throws IllegalActionException {
         throw new IllegalActionException("Action unsupported");
@@ -46,34 +82,6 @@ public class BluetoothStatusToken extends Token {
     public Token divideReverse(Token leftArgument)
             throws IllegalActionException {
         throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public BooleanToken isCloseTo(Token token, double epsilon)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public BooleanToken isEqualTo(Token rightArgument)
-            throws IllegalActionException {
-        if (rightArgument instanceof BluetoothStatusToken){
-            BluetoothStatusToken right = (BluetoothStatusToken) rightArgument;
-            if (this._status == right.getStatusValue()){
-                return new BooleanToken(true);
-            }
-            else {
-                return new BooleanToken(false);
-            }
-        }
-        else {
-            throw new IllegalActionException("The argument must be of type BluetoothStatusToken");
-        }
-    }
-
-    @Override
-    public boolean isNil() {
-        return super.isNil();
     }
 
     @Override
@@ -113,22 +121,11 @@ public class BluetoothStatusToken extends Token {
             throws IllegalActionException {
         throw new IllegalActionException("Action unsupported");
     }
-
-    @Override
-    public String toString() {
-        switch (_status){
-        case STATUS_ERROR:
-            return "ERROR";
-        case STATUS_OK:
-            return "OK";
-        default:
-            return "nil"; 
-        }
-    }
     
     ///////////////////////////////////////////////////////////////////
     ////                         private variables                 ////
     
-    private BluetoothStatus _status;
-
+    private final BluetoothWirelessCommand _command;
+    private final String _deviceIdentifier;
+    
 }
