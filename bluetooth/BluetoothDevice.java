@@ -11,7 +11,6 @@ import java.util.HashSet;
 import ptolemy.actor.TypedAtomicActor;
 import ptolemy.actor.TypedIOPort;
 import ptolemy.data.RecordToken;
-import ptolemy.data.StringToken;
 import ptolemy.data.Token;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.data.type.BaseType;
@@ -47,6 +46,7 @@ enum States {
     STATE_IDLE,
     STATE_CONNECTED,
     STATE_SCANNING,
+    STATE_DISCOVERABLE,
     STATE_OFF,
 }
 
@@ -144,8 +144,8 @@ public class BluetoothDevice extends TypedAtomicActor {
     public void fire() throws IllegalActionException {
         super.fire();
 
-        RecordToken _wiredInputToken = new RecordToken();
-        RecordToken _wirelessInputToken = new RecordToken();
+        RecordToken _wiredInputToken;
+        BluetoothToken _wirelessInputToken;
         
         if (!(getDirector() instanceof WirelessDirector) ){
             throw new IllegalActionException(this.getClassName() + ": Cannot execute without WirelessDirector.");
@@ -153,75 +153,98 @@ public class BluetoothDevice extends TypedAtomicActor {
         
         if (wiredInput.hasToken(0)){
             _wiredInputToken = (RecordToken) wiredInput.get(0);
-        }
-        if (wirelessInput.hasToken(0)){
-            _wirelessInputToken = (RecordToken) wirelessInput.get(0);
-        }
-        
-        BluetoothWiredCommandToken command = (BluetoothWiredCommandToken) _wiredInputToken.get("command");
-        if (command == null){
-            throw new IllegalActionException("Command is null?");
-        }
-        
-        /**
-         * The following switch case structure is the state machine that controls the main dynamics of the
-         * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
-         * perform actions. Each fire() will only evaluate one input, with the wired input, in this case, taking
-         * priority over the wireless input. The wireless input will evaluate with priority ONLY when the device is
-         * in the connected state. The only exception to this case is when a record token with a disconnect command
-         * is received to the wired input.
-         * 
-         * TODO: Work in Progress state machine
-         */
-        BluetoothStatusToken status = new BluetoothStatusToken();
-        status.setStatusValue(BluetoothStatus.STATUS_OK);
+            BluetoothWiredCommandToken command = (BluetoothWiredCommandToken) _wiredInputToken.get("command");
+            if (command == null){
+                throw new IllegalActionException("Command is null?");
+            }
+            
+            /**
+             * The following switch case structure is the state machine that controls the main dynamics of the
+             * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
+             * perform actions. Each fire() will only evaluate one input, with the wired input, in this case, taking
+             * priority over the wireless input. The wireless input will evaluate with priority ONLY when the device is
+             * in the connected state. The only exception to this case is when a record token with a disconnect command
+             * is received to the wired input.
+             * 
+             * TODO: Work in Progress state machine
+             */
+            BluetoothStatusToken status;
 
-        switch(state){
-            case STATE_OFF:
-                if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHON)){
-                    this.state = States.STATE_IDLE;
-                }
-                else {
-                    return;
-                }
-                break;
-            case STATE_IDLE:
-                if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
-                    this.state = States.STATE_OFF;
-                }
-                else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SCAN)){
-                    this.state = States.STATE_SCANNING;
-                }
-                else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_CONNECT)){
+            switch(state){
+                case STATE_OFF:
+                    if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHON)){
+                        this.state = States.STATE_IDLE;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    else {
+                        return;
+                    }
+                case STATE_IDLE:
+                    if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                        this.state = States.STATE_OFF;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SCAN)){
+                        this.state = States.STATE_SCANNING;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_CONNECT)){
+                        
+                    }
+                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_DISCOVERABLE)){
+                        this.state = States.STATE_DISCOVERABLE;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    else {
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    break;
+                case STATE_CONNECTED:
                     
-                }
-                else {
-                    status.setStatusValue(BluetoothStatus.STATUS_ERROR);
-                }
-                break;
-            case STATE_CONNECTED:
-                
-                break;
-            case STATE_SCANNING:
-                if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
-                    this.state = States.STATE_OFF;
-                }
-                else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_STOPSCAN)){
-                    this.state = States.STATE_IDLE;
-                }
-                
-                if (_wirelessInputToken != null){
-                    Token _response = _wirelessInputToken.get("response");
-                    // TODO: Check response - if its a go, register this with a list of known bluetooth devices
-                }
-                
-                
-                break;
-            default:
-                status.setStatusValue(BluetoothStatus.STATUS_ERROR);
-                break;
+                    break;
+                case STATE_SCANNING:
+                    if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                        this.state = States.STATE_OFF;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_STOPSCAN)){
+                        this.state = States.STATE_IDLE;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    if (wirelessInput.hasToken(0)){
+                        _wirelessInputToken = (BluetoothResponseToken) wirelessInput.get(0);
+                    }
+                    
+                    
+                    break;
+                case STATE_DISCOVERABLE:
+                    if (wirelessInput.hasToken(0)){
+                        _wirelessInputToken = (BluetoothToken) wirelessInput.get(0);
+                        
+                    }
+                    break;
+                default:
+                    status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR);
+                    this.wiredOutput.send(0, status);
+                    break;         
+            }
         }
-        this.wiredOutput.send(0, status);
+        
+
     }
     
     ///////////////////////////////////////////////////////////////////

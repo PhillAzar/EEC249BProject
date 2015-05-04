@@ -1,99 +1,74 @@
 package ptolemy.domains.wireless.lib.bluetooth;
 
+import ptolemy.data.BooleanToken;
 import ptolemy.data.Token;
-import ptolemy.data.type.Type;
 import ptolemy.kernel.util.IllegalActionException;
 
-public class BluetoothToken extends Token implements Type {
+public abstract class BluetoothToken extends Token {
 
     @Override
-    public Type add(Type rightArgumentType) {
-        // TODO Auto-generated method stub
-        return null;
+    public BooleanToken isCloseTo(Token token, double epsilon)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
+    }
+    
+    @Override
+    public Token add(Token rightArgument) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public Token convert(Token token) throws IllegalActionException {
-        // TODO Auto-generated method stub
-        return null;
+    public Token addReverse(Token leftArgument) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public Type divide(Type rightArgumentType) {
-        // TODO Auto-generated method stub
-        return null;
+    public Token divide(Token rightArgument) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public int getTypeHash() {
-        // TODO Auto-generated method stub
-        return 0;
+    public Token divideReverse(Token leftArgument)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public Class getTokenClass() {
-        // TODO Auto-generated method stub
-        return null;
+    public Token modulo(Token rightArgument) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public boolean isAbstract() {
-        // TODO Auto-generated method stub
-        return false;
+    public Token moduloReverse(Token leftArgument)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public boolean isCompatible(Type type) {
-        // TODO Auto-generated method stub
-        return false;
+    public Token multiply(Token rightArgument) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public boolean isConstant() {
-        // TODO Auto-generated method stub
-        return false;
+    public Token multiplyReverse(Token leftArgument)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public boolean isInstantiable() {
-        // TODO Auto-generated method stub
-        return false;
+    public Token pow(int times) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public boolean isSubstitutionInstance(Type type) {
-        // TODO Auto-generated method stub
-        return false;
+    public Token subtract(Token rightArgument) throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
     @Override
-    public Type modulo(Type rightArgumentType) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Type multiply(Type rightArgumentType) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Type one() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Type subtract(Type rightArgumentType) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Type zero() {
-        // TODO Auto-generated method stub
-        return null;
+    public Token subtractReverse(Token leftArgument)
+            throws IllegalActionException {
+        throw new IllegalActionException("Action unsupported");
     }
 
 }

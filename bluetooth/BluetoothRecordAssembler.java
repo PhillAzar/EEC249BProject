@@ -12,7 +12,7 @@ import java.util.Set;
 import ptolemy.actor.Manager;
 import ptolemy.actor.TypedAtomicActor;
 import ptolemy.actor.TypedIOPort;
-import ptolemy.actor.lib.RecordDisassembler;
+import ptolemy.actor.lib.RecordAssembler;
 import ptolemy.actor.util.ConstructAssociativeType;
 import ptolemy.actor.util.ExtractFieldType;
 import ptolemy.data.RecordToken;

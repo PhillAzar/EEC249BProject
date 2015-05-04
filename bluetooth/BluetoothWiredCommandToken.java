@@ -11,7 +11,7 @@ import ptolemy.kernel.util.IllegalActionException;
  * @author Phill
  *
  */
-public class BluetoothWiredCommandToken extends Token {
+public class BluetoothWiredCommandToken extends BluetoothToken {
 
     public BluetoothWiredCommandToken(BluetoothWiredCommand command){
         this._command = command;
@@ -40,12 +40,6 @@ public class BluetoothWiredCommandToken extends Token {
                 return "nil";        
         }
     }
-    
-    @Override
-    public BooleanToken isCloseTo(Token token, double epsilon)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
 
     @Override
     public BooleanToken isEqualTo(Token rightArgument)
@@ -62,65 +56,6 @@ public class BluetoothWiredCommandToken extends Token {
         else {
             throw new IllegalActionException("The argument must be of type BluetoothWiredCommandToken");
         }
-    }
-
-    @Override
-    public Token add(Token rightArgument) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token addReverse(Token leftArgument) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token divide(Token rightArgument) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token divideReverse(Token leftArgument)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token modulo(Token rightArgument) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token moduloReverse(Token leftArgument)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token multiply(Token rightArgument) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token multiplyReverse(Token leftArgument)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token pow(int times) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token subtract(Token rightArgument) throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
-    }
-
-    @Override
-    public Token subtractReverse(Token leftArgument)
-            throws IllegalActionException {
-        throw new IllegalActionException("Action unsupported");
     }
     
     ///////////////////////////////////////////////////////////////////
