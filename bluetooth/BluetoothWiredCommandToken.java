@@ -34,8 +34,8 @@ public class BluetoothWiredCommandToken extends BluetoothToken {
                 return "SWITCHOFF";
             case COMMAND_SWITCHON:
                 return "SWITCHON";
-            case COMMAND_TRANSMIT:
-                return "TRANSMIT";
+            case COMMAND_PAIR:
+                return "PAIR";
             default:
                 return "nil";        
         }

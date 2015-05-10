@@ -10,8 +10,7 @@ import java.util.HashSet;
 
 import ptolemy.actor.TypedAtomicActor;
 import ptolemy.actor.TypedIOPort;
-import ptolemy.data.RecordToken;
-import ptolemy.data.Token;
+import ptolemy.data.StringToken;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.data.type.BaseType;
 import ptolemy.domains.wireless.kernel.WirelessDirector;
@@ -46,7 +45,7 @@ enum States {
     STATE_IDLE,
     STATE_CONNECTED,
     STATE_SCANNING,
-    STATE_DISCOVERABLE,
+    STATE_PAIRINITIATED,
     STATE_OFF,
 }
 
@@ -65,7 +64,11 @@ public class BluetoothDevice extends TypedAtomicActor {
         super(container, name);
         
         state = States.STATE_OFF;
-        _knownDevices = new HashSet<String>();
+        _foundDevices = new HashSet<String>();
+        _pairedDevices = new HashSet<String>();
+        _connectedDevices = new HashSet<String>();
+        _discoverable = false;
+        
         
         wirelessInputChannelName = new StringParameter(this, "wirelessInputChannelName");
         wirelessInputChannelName.setExpression("WirelessInputChannel");
@@ -76,7 +79,7 @@ public class BluetoothDevice extends TypedAtomicActor {
         wiredInput = new TypedIOPort(this, "Wired Input", true, false);
         wiredOutput = new TypedIOPort(this, "Wired Output", false, true);
         
-        wiredInput.setTypeEquals(BaseType.RECORD);
+        wiredInput.setTypeEquals(BaseType.STRING);
         wiredOutput.setTypeEquals(BaseType.GENERAL);
         
         wirelessInput = new WirelessIOPort(this, "Wireless Input", true, false);
@@ -85,15 +88,16 @@ public class BluetoothDevice extends TypedAtomicActor {
         wirelessOutput = new WirelessIOPort(this, "Wireless Output", false, true);
         wirelessOutput.outsideChannel.setExpression("$wirelessOutputChannelName");
         
+        wirelessInput.setTypeEquals(BaseType.GENERAL);
+        wirelessOutput.setTypeEquals(BaseType.GENERAL);
+        
     }
     
     ///////////////////////////////////////////////////////////////////
     ////                     ports and parameters                  ////
     
     //TODO: Input Ports, Parameters, Lists, etc.
-    
-    private States state;
-    
+        
     /** The input port for wired communication, which could potentially facilitate communication with other
      * devices/components/actors which are not wireless that interact with this actor.
      * TODO: This use case - should be explored at some point.
@@ -143,21 +147,52 @@ public class BluetoothDevice extends TypedAtomicActor {
      */
     public void fire() throws IllegalActionException {
         super.fire();
-
-        RecordToken _wiredInputToken;
-        BluetoothToken _wirelessInputToken;
         
         if (!(getDirector() instanceof WirelessDirector) ){
             throw new IllegalActionException(this.getClassName() + ": Cannot execute without WirelessDirector.");
         }
         
+        StringToken _wiredInputToken;
+
+        
         if (wiredInput.hasToken(0)){
-            _wiredInputToken = (RecordToken) wiredInput.get(0);
-            BluetoothWiredCommandToken command = (BluetoothWiredCommandToken) _wiredInputToken.get("command");
-            if (command == null){
-                throw new IllegalActionException("Command is null?");
-            }
+            _wiredInputToken = (StringToken) wiredInput.get(0);
+            BluetoothWiredCommand command;
+            switch(_wiredInputToken.stringValue()){
+                case "switchon":
+                    command = BluetoothWiredCommand.COMMAND_SWITCHON;
+                    break;
+                case "switchoff":
+                    command = BluetoothWiredCommand.COMMAND_SWITCHOFF;
+                    break;
+                case "scan":
+                    command = BluetoothWiredCommand.COMMAND_SCAN;
+                    break;
+                case "stopscan":
+                    command = BluetoothWiredCommand.COMMAND_STOPSCAN;
+                    break;
+                case "connect":
+                    command = BluetoothWiredCommand.COMMAND_CONNECT;
+                    break;
+                case "disconnect":
+                    command = BluetoothWiredCommand.COMMAND_DISCONNECT;
+                    break;
+                case "pair":
+                    command = BluetoothWiredCommand.COMMAND_PAIR;
+                    break;
+                case "discoverable":
+                    command = BluetoothWiredCommand.COMMAND_DISCOVERABLE;
+                    break;
+                case "hide":
+                    command = BluetoothWiredCommand.COMMAND_HIDE;
+                    break;
+                default:
+                    command = null;
+                }
             
+            if (command == null) {
+                throw new IllegalActionException("Input string does not equal supported command value");
+            }
             /**
              * The following switch case structure is the state machine that controls the main dynamics of the
              * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
@@ -172,9 +207,9 @@ public class BluetoothDevice extends TypedAtomicActor {
 
             switch(state){
                 case STATE_OFF:
-                    if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHON)){
+                    if (command.equals(BluetoothWiredCommand.COMMAND_SWITCHON)){
                         this.state = States.STATE_IDLE;
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
@@ -182,29 +217,35 @@ public class BluetoothDevice extends TypedAtomicActor {
                         return;
                     }
                 case STATE_IDLE:
-                    if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                    if (command.equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
                         this.state = States.STATE_OFF;
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
-                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SCAN)){
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_SCAN)){
                         this.state = States.STATE_SCANNING;
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
-                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_CONNECT)){
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_CONNECT)){
                         
                     }
-                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_DISCOVERABLE)){
-                        this.state = States.STATE_DISCOVERABLE;
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_DISCOVERABLE)){
+                        this._discoverable = true;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_HIDE)){
+                        this._discoverable = false;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
                     else {
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR);
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
@@ -213,32 +254,41 @@ public class BluetoothDevice extends TypedAtomicActor {
                     
                     break;
                 case STATE_SCANNING:
-                    if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                    if (command.equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
                         this.state = States.STATE_OFF;
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
-                    else if (command.getCommandValue().equals(BluetoothWiredCommand.COMMAND_STOPSCAN)){
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_STOPSCAN)){
                         this.state = States.STATE_IDLE;
-                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK);
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
                     }
-                    if (wirelessInput.hasToken(0)){
-                        _wirelessInputToken = (BluetoothResponseToken) wirelessInput.get(0);
-                    }
-                    
-                    
+                    while (wirelessInput.hasToken(0)) {
+                        BluetoothResponseToken _token = (BluetoothResponseToken) wirelessInput.get(0);
+                        if (_token.getResponse().equals(BluetoothResponse.RESPONSE_FINDME)){
+                            _foundDevices.add(_token.getDeviceIdentifier());                            
+                        }
+                    }                    
                     break;
-                case STATE_DISCOVERABLE:
-                    if (wirelessInput.hasToken(0)){
-                        _wirelessInputToken = (BluetoothToken) wirelessInput.get(0);
-                        
+                case STATE_PAIRINITIATED:
+                    
+                    if (command.equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
+                        this.state = States.STATE_OFF;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
+                        this.wiredOutput.send(0, status);
+                        break;
                     }
-                    break;
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_STOPSCAN)){
+                        this.state = States.STATE_IDLE;
+                        status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
+                        this.wiredOutput.send(0, status);
+                        break;
+                    }
                 default:
-                    status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR);
+                    status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR, "empty");
                     this.wiredOutput.send(0, status);
                     break;         
             }
@@ -250,5 +300,10 @@ public class BluetoothDevice extends TypedAtomicActor {
     ///////////////////////////////////////////////////////////////////
     ////                         private variables                 ////
     
-    private HashSet<String> _knownDevices;
+    private HashSet<String> _foundDevices;
+    private HashSet<String> _pairedDevices;
+    private HashSet<String> _connectedDevices; 
+    private States state;
+    private boolean _discoverable;
+   
 }

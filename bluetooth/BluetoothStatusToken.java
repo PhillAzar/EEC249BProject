@@ -11,14 +11,19 @@ import ptolemy.kernel.util.IllegalActionException;
  * @author Phill
  *
  */
-public class BluetoothStatusToken extends BluetoothToken {
+public class BluetoothStatusToken<T> extends BluetoothToken {
 
-    public BluetoothStatusToken(BluetoothStatus status){
+    public BluetoothStatusToken(BluetoothStatus status, T data){
         this._status = status;
+        this._data = data;
     }
     
     public BluetoothStatus getStatusValue(){
         return this._status;
+    }
+    
+    public T getData() {
+        return this._data;
     }
 
     @Override
@@ -54,5 +59,5 @@ public class BluetoothStatusToken extends BluetoothToken {
     ////                         private variables                 ////
     
     private final BluetoothStatus _status;
-
+    private final T _data;
 }
