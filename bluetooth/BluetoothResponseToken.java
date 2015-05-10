@@ -7,9 +7,10 @@ import ptolemy.kernel.util.IllegalActionException;
 
 public class BluetoothResponseToken extends BluetoothToken {
     
-    public BluetoothResponseToken(BluetoothResponse response, String deviceIdentifier){
+    public BluetoothResponseToken(BluetoothResponse response, String deviceIdentifier, String sourceIdentifier){
         this._response = response;
         this._deviceIdentifier = deviceIdentifier;
+        this._sourceIdentifier = sourceIdentifier;
     }
     
     public BluetoothResponse getResponse(){
@@ -18,6 +19,10 @@ public class BluetoothResponseToken extends BluetoothToken {
     
     public String getDeviceIdentifier(){
         return this._deviceIdentifier;
+    }
+    
+    public String getSourceIdentifier(){
+        return this._sourceIdentifier;
     }
     
     @Override
@@ -61,4 +66,5 @@ public class BluetoothResponseToken extends BluetoothToken {
     }
     private final BluetoothResponse _response;
     private final String _deviceIdentifier;
+    private final String _sourceIdentifier;
 }
