@@ -190,10 +190,8 @@ public class BluetoothDevice extends TypedAtomicActor {
                 case "hide":
                     command = BluetoothWiredCommand.COMMAND_HIDE;
                     break;
-                case "empty":
-                    command = BluetoothWiredCommand.COMMAND_NOCOMMAND;
                 default:
-                    command = null;
+                    command = BluetoothWiredCommand.COMMAND_NOCOMMAND;
                 }
             
             if (command == null) {
@@ -240,7 +238,7 @@ public class BluetoothDevice extends TypedAtomicActor {
                             String deviceToConnect = ((StringToken) wiredInputDetails.get(0)).stringValue();
                             if (this._pairedDevices.contains(deviceToConnect)) {
                                 this.state = States.STATE_CONNECTED;
-                                BluetoothResponseToken connectRequest = new BluetoothResponseToken(BluetoothResponse.COMMAND_REQUESTCONNECT, deviceToConnect, this.getName());
+                                BluetoothResponseToken connectRequest = new BluetoothResponseToken(BluetoothResponse.COMMAND_REQUESTCONNECT, deviceToConnect, this.getName(), "");
                                 wirelessOutput.send(0, connectRequest);
                                 status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "Attempting to connect to:"+deviceToConnect);
                                 wiredOutput.send(0, status);  
@@ -257,6 +255,7 @@ public class BluetoothDevice extends TypedAtomicActor {
                         this._discoverable = true;
                         status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
+                        this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_FINDME, null, this.getName(), ""));
                         break;
                     }
                     else if (command.equals(BluetoothWiredCommand.COMMAND_HIDE)){
@@ -274,7 +273,7 @@ public class BluetoothDevice extends TypedAtomicActor {
                                 if (_newResponse.getResponse().equals(BluetoothResponse.COMMAND_REQUESTCONNECT)){
                                     if (this._pairedDevices.contains(_newResponse.getSourceIdentifier())){
                                         this.state = States.STATE_CONNECTED;
-                                        this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_ACCEPT, _newResponse.getSourceIdentifier(), this.getName()));
+                                        this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_ACCEPT, _newResponse.getSourceIdentifier(), this.getName(), ""));
                                         status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "Received connection request from:"+_newResponse.getSourceIdentifier());
                                         wiredOutput.send(0, status);
                                     }
@@ -287,7 +286,7 @@ public class BluetoothDevice extends TypedAtomicActor {
                     if (command.equals(BluetoothWiredCommand.COMMAND_SWITCHOFF)){
                         this.state = States.STATE_OFF;
                         for (String device : this._connectedDevices){
-                            BluetoothResponseToken shuttingOff = new BluetoothResponseToken(BluetoothResponse.COMMAND_DISCONNECT, device, this.getName());
+                            BluetoothResponseToken shuttingOff = new BluetoothResponseToken(BluetoothResponse.COMMAND_DISCONNECT, device, this.getName(), "");
                             wirelessOutput.send(0, shuttingOff);
                         }
                         status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
@@ -304,7 +303,7 @@ public class BluetoothDevice extends TypedAtomicActor {
                         if (wiredInputDetails.hasToken(0)){
                             String deviceToConnect = ((StringToken) wiredInputDetails.get(0)).stringValue();
                             if (this._pairedDevices.contains(deviceToConnect)) {
-                                BluetoothResponseToken connectRequest = new BluetoothResponseToken(BluetoothResponse.COMMAND_REQUESTCONNECT, deviceToConnect, this.getName());
+                                BluetoothResponseToken connectRequest = new BluetoothResponseToken(BluetoothResponse.COMMAND_REQUESTCONNECT, deviceToConnect, this.getName(), "");
                                 wirelessOutput.send(0, connectRequest);
                                 status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "Attempting to connect to:"+deviceToConnect);
                                 wiredOutput.send(0, status);  
@@ -342,12 +341,13 @@ public class BluetoothDevice extends TypedAtomicActor {
                                 }
                                 else if (_newResponse.getResponse().equals(BluetoothResponse.RESPONSE_OK)){
                                     if (this._connectedDevices.contains(_newResponse.getSourceIdentifier())){
-                                        //TODO: left off here! 5/10/2015
+                                        BluetoothStatusToken<?> _newData = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, _newResponse.getData());
+                                        wiredOutput.send(0, _newData);
                                     }
                                 }
                                 else if (_newResponse.getResponse().equals(BluetoothResponse.COMMAND_REQUESTCONNECT)){
                                     if (this._pairedDevices.contains(_newResponse.getSourceIdentifier())){
-                                        this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_ACCEPT, _newResponse.getSourceIdentifier(), this.getName()));
+                                        this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_ACCEPT, _newResponse.getSourceIdentifier(), this.getName(), ""));
                                     }
                                 }
                             }
