@@ -10,7 +10,7 @@ package ptolemy.domains.wireless.lib.bluetooth;
  *
  * @see BluetoothDevice
  */
-public enum BluetoothWiredCommand {
+public enum BluetoothCommand {
     COMMAND_SWITCHON,
     COMMAND_SWITCHOFF,
     COMMAND_SCAN,
