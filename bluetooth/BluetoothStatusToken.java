@@ -4,6 +4,7 @@
 package ptolemy.domains.wireless.lib.bluetooth;
 
 import ptolemy.data.BooleanToken;
+import ptolemy.data.StringToken;
 import ptolemy.data.Token;
 import ptolemy.kernel.util.IllegalActionException;
 
@@ -66,7 +67,7 @@ public class BluetoothStatusToken<T> extends BluetoothToken {
 
     @Override
     public String toString() {
-        if (_data instanceof String) {
+        if (_data instanceof String || _data instanceof StringToken) {
             switch (_status){
                 case STATUS_ERROR:
                     return ("ERROR," + this._data);

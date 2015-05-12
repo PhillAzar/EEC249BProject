@@ -270,6 +270,9 @@ public class BluetoothDevice extends TypedAtomicActor {
                         break;
                     }
                     else {
+                        if (this.wiredInputData.hasToken(0)){
+                            Token _useless = wiredInputData.get(0);
+                        }
                         return;
                     }
                 case STATE_IDLE:
@@ -385,6 +388,10 @@ public class BluetoothDevice extends TypedAtomicActor {
                             }
                         }
                     }
+                    //Eat useless tokens
+                    if (this.wiredInputData.hasToken(0)){
+                        Token _useless = wiredInputData.get(0);
+                    }
                     break;
                 case STATE_CONNECTED:
                     if (command.equals(BluetoothCommand.COMMAND_SWITCHOFF)){
@@ -498,7 +505,7 @@ public class BluetoothDevice extends TypedAtomicActor {
                                     this._connectedDevices.add(_newResponse.getDeviceIdentifier());
                                     status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "Accepted connection request from : "+_newResponse.getSourceIdentifier());
                                     wiredOutput.send(0, status); 
-                                }
+                                   }
                                 else if (_newResponse.getResponse().equals(BluetoothResponse.RESPONSE_OK)){
                                     if (this._connectedDevices.contains(_newResponse.getSourceIdentifier())){
                                         BluetoothStatusToken<?> _newData = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, _newResponse.getData());
@@ -546,6 +553,10 @@ public class BluetoothDevice extends TypedAtomicActor {
                     }
                     if (this.state.equals(States.STATE_CONNECTED) && this._connectedDevices.isEmpty()) {
                         this.state = States.STATE_IDLE;
+                    }
+                    //Eat useless tokens
+                    if (this.wiredInputData.hasToken(0)){
+                        Token _useless = wiredInputData.get(0);
                     }
                     break;
                 case STATE_SCANNING:
@@ -641,7 +652,11 @@ public class BluetoothDevice extends TypedAtomicActor {
                                 }
                             }
                         }
-                    }                    
+                    }
+                    //Eat useless tokens
+                    if (this.wiredInputData.hasToken(0)){
+                        Token _useless = wiredInputData.get(0);
+                    }
                     break;
                 default:
                     status = new BluetoothStatusToken(BluetoothStatus.STATUS_ERROR, "Unknown state - Fix me");
