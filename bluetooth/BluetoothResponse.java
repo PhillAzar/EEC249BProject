@@ -3,7 +3,8 @@ package ptolemy.domains.wireless.lib.bluetooth;
 public enum BluetoothResponse {
     RESPONSE_OK,
     RESPONSE_DENY,
-    RESPONSE_ACCEPT,
+    RESPONSE_ACCEPTCONNECT,
+    RESPONSE_ACCEPTPAIR,
     RESPONSE_FINDME,
     COMMAND_REQUESTPAIR,
     COMMAND_REQUESTCONNECT,

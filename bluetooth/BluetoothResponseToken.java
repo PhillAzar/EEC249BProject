@@ -39,7 +39,7 @@ public class BluetoothResponseToken<T> extends BluetoothToken {
             return "REQUESTCONNECT";
         case COMMAND_REQUESTPAIR:
             return "REQUESTPAIR";
-        case RESPONSE_ACCEPT:
+        case RESPONSE_ACCEPTCONNECT:
             return "ACCEPT";
         case RESPONSE_DENY:
             return "DENY";
