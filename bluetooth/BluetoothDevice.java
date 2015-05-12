@@ -137,7 +137,7 @@ public class BluetoothDevice extends TypedAtomicActor {
         //Initialize wireless port types
         wirelessInput.setTypeEquals(BaseType.GENERAL);
         wirelessOutput.setTypeEquals(BaseType.GENERAL);
-        
+                
     }
     
     ///////////////////////////////////////////////////////////////////
