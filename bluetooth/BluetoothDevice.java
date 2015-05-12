@@ -152,7 +152,7 @@ public class BluetoothDevice extends TypedAtomicActor {
         }
         
         StringToken _wiredInputToken;
-        Token _wiredinputExtra;
+        Token _wiredInputExtra;
 
         
         if (wiredInput.hasToken(0)){
@@ -161,41 +161,48 @@ public class BluetoothDevice extends TypedAtomicActor {
         else {
             _wiredInputToken = new StringToken("empty");
         }
-            BluetoothWiredCommand command;
-            switch(_wiredInputToken.stringValue()){
-                case "switchon":
-                    command = BluetoothWiredCommand.COMMAND_SWITCHON;
-                    break;
-                case "switchoff":
-                    command = BluetoothWiredCommand.COMMAND_SWITCHOFF;
-                    break;
-                case "scan":
-                    command = BluetoothWiredCommand.COMMAND_SCAN;
-                    break;
-                case "stopscan":
-                    command = BluetoothWiredCommand.COMMAND_STOPSCAN;
-                    break;
-                case "connect":
-                    command = BluetoothWiredCommand.COMMAND_CONNECT;
-                    break;
-                case "disconnect":
-                    command = BluetoothWiredCommand.COMMAND_DISCONNECT;
-                    break;
-                case "pair":
-                    command = BluetoothWiredCommand.COMMAND_PAIR;
-                    break;
-                case "discoverable":
-                    command = BluetoothWiredCommand.COMMAND_DISCOVERABLE;
-                    break;
-                case "hide":
-                    command = BluetoothWiredCommand.COMMAND_HIDE;
-                    break;
-                default:
-                    command = BluetoothWiredCommand.COMMAND_NOCOMMAND;
-                }
+        BluetoothWiredCommand command;
+        switch(_wiredInputToken.stringValue()){
+            case "switchon":
+                command = BluetoothWiredCommand.COMMAND_SWITCHON;
+                break;
+            case "switchoff":
+                command = BluetoothWiredCommand.COMMAND_SWITCHOFF;
+                break;
+            case "scan":
+                command = BluetoothWiredCommand.COMMAND_SCAN;
+                break;
+            case "stopscan":
+                command = BluetoothWiredCommand.COMMAND_STOPSCAN;
+                break;
+            case "connect":
+                command = BluetoothWiredCommand.COMMAND_CONNECT;
+                break;
+            case "disconnect":
+                command = BluetoothWiredCommand.COMMAND_DISCONNECT;
+                break;
+            case "pair":
+                command = BluetoothWiredCommand.COMMAND_PAIR;
+                break;
+            case "discoverable":
+                command = BluetoothWiredCommand.COMMAND_DISCOVERABLE;
+                break;
+            case "hide":
+                command = BluetoothWiredCommand.COMMAND_HIDE;
+                break;
+            default:
+                command = BluetoothWiredCommand.COMMAND_NOCOMMAND;
+            }
             
             if (command == null) {
                 throw new IllegalActionException("Input string does not equal supported command value");
+            }
+            
+            if (wiredInputDetails.hasToken(0)){
+                _wiredInputExtra = (StringToken) wiredInputDetails.get(0);
+            }
+            else {
+                _wiredInputExtra = new StringToken("empty");
             }
             /**
              * The following switch case structure is the state machine that controls the main dynamics of the
@@ -255,7 +262,6 @@ public class BluetoothDevice extends TypedAtomicActor {
                         this._discoverable = true;
                         status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
-                        this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_FINDME, null, this.getName(), ""));
                         break;
                     }
                     else if (command.equals(BluetoothWiredCommand.COMMAND_HIDE)){
@@ -396,6 +402,9 @@ public class BluetoothDevice extends TypedAtomicActor {
                     this.wiredOutput.send(0, status);
                     break;         
             }
+        if (this._discoverable == true){
+            this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_FINDME, "", this.getName(), ""));
+        }
         
 
     }
