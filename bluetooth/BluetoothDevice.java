@@ -110,17 +110,6 @@ public class BluetoothDevice extends TypedAtomicActor {
         wirelessInput.setTypeEquals(BaseType.GENERAL);
         wirelessOutput.setTypeEquals(BaseType.GENERAL);
         
-        _attachText("_iconDescription", "<svg>\n"
-                + "<rect x=\"-30\" y=\"-20\" " + "width=\"60\" height=\"40\" "
-                + "style=\"fill:white\"/>\n"
-                + "<line x1=\"0\" y1=\"-15\" x2=\"0\" y2=\"-13\"/>\n"
-                + "<line x1=\"0\" y1=\"14\" x2=\"0\" y2=\"16\"/>\n"
-                + "<line x1=\"-15\" y1=\"0\" x2=\"-13\" y2=\"0\"/>\n"
-                + "<line x1=\"14\" y1=\"0\" x2=\"16\" y2=\"0\"/>\n"
-                + "<line x1=\"0\" y1=\"-8\" x2=\"0\" y2=\"0\"/>\n"
-                + "<line x1=\"0\" y1=\"0\" x2=\"11.26\" y2=\"-6.5\"/>\n"
-                + "</svg>\n");
-        
     }
     
     ///////////////////////////////////////////////////////////////////
