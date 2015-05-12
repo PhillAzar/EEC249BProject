@@ -4,8 +4,11 @@
 package ptolemy.domains.wireless.lib.bluetooth;
 
 /**
- * @author Phill
+ * This class defines all allowable Bluetooth Wired commands, that wil be parsed within the Bluetooth Device actor.
+ * 
+ * @author Phillip Azar
  *
+ * @see BluetoothDevice
  */
 public enum BluetoothWiredCommand {
     COMMAND_SWITCHON,

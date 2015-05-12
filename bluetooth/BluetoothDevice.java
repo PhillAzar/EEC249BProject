@@ -24,7 +24,7 @@ import ptolemy.kernel.util.NameDuplicationException;
 import ptolemy.kernel.util.StringAttribute;
 
 /**
- * This Actor is simulation of a Bluetooth adapter in a bluetooth enabled device. The simulation is <i>functional<i>,
+ * This Actor is simulation of a Bluetooth adapter in a Bluetooth enabled device. The simulation is <i>functional<i>,
  * i.e. the hardware is not simulated. Instead, we provide an abstraction based on the Bluetooth dynamics found in
  * popular platforms such as Android and iOS. 
  * <p>
@@ -37,6 +37,7 @@ import ptolemy.kernel.util.StringAttribute;
  * The dynamics of the actor are evaluated via a state machine found in the fire() method. The state machine will evaluate
  * the RecordToken at the wired input before evaluating any BluetoothRecordToken at the wireless input ports.
  * <p>
+ * 
  *@author Phillip Azar
  *@version 
  *@since
@@ -67,6 +68,7 @@ public class BluetoothDevice extends TypedAtomicActor {
             throws NameDuplicationException, IllegalActionException {
         super(container, name);
         
+        // Initialize internal variables
         state = States.STATE_OFF;
         _foundDevices = new HashSet<String>();
         _pairedDevices = new HashSet<String>();
@@ -74,13 +76,14 @@ public class BluetoothDevice extends TypedAtomicActor {
         _discoverable = false;
 
         
-        
+        // Initialize wireless port parameters
         wirelessInputChannelName = new StringParameter(this, "wirelessInputChannelName");
         wirelessInputChannelName.setExpression("WirelessInputChannel");
         
         wirelessOutputChannelName = new StringParameter(this, "wirelessOutputChannelName");
         wirelessOutputChannelName.setExpression("WirelessOutputChannel");
         
+        // Initialize wired inputs
         wiredInput = new TypedIOPort(this, "Wired Input", true, false);
         new Parameter(wiredInput, "_showName").setExpression("true");
         
@@ -93,20 +96,25 @@ public class BluetoothDevice extends TypedAtomicActor {
         wiredOutput = new TypedIOPort(this, "Wired Output", false, true);
         new Parameter(wiredOutput, "_showName").setExpression("true");
         
+        // Set wired port types
         wiredInput.setTypeEquals(BaseType.STRING);
         wiredInputDetails.setTypeEquals(BaseType.STRING);
-        wiredOutput.setTypeEquals(BaseType.OBJECT);
+        wiredInputData.setTypeEquals(BaseType.GENERAL);
+        wiredOutput.setTypeEquals(BaseType.GENERAL);
         
+        // Initialize wireless input
         wirelessInput = new WirelessIOPort(this, "Wireless Input", true, false);
         new Parameter(wirelessInput, "_showName").setExpression("true");
         new StringAttribute(wirelessInput, "_cardinal").setExpression("SOUTH");
         wirelessInput.outsideChannel.setExpression("$wirelessInputChannelName");
         
+        // Initialize wireless output
         wirelessOutput = new WirelessIOPort(this, "Wireless Output", false, true);
         new Parameter(wirelessOutput, "_showName").setExpression("true");
         new StringAttribute(wirelessOutput, "_cardinal").setExpression("SOUTH");
         wirelessOutput.outsideChannel.setExpression("$wirelessOutputChannelName");
         
+        //Initialize wireless port types
         wirelessInput.setTypeEquals(BaseType.GENERAL);
         wirelessOutput.setTypeEquals(BaseType.GENERAL);
         
@@ -115,7 +123,6 @@ public class BluetoothDevice extends TypedAtomicActor {
     ///////////////////////////////////////////////////////////////////
     ////                     ports and parameters                  ////
     
-    //TODO: Input Ports, Parameters, Lists, etc.
         
     /** The input port for wired communication, which could potentially facilitate communication with other
      * devices/components/actors which are not wireless that interact with this actor.
@@ -130,7 +137,7 @@ public class BluetoothDevice extends TypedAtomicActor {
     
     /**
      * The input port for data to be sent. This will only be checked when the command to send data has been issued, and further will only be checked when in the
-     * connected state. This port is of type Object.
+     * connected state. This port is of type General.
      */
     public TypedIOPort wiredInputData;
     
@@ -150,8 +157,9 @@ public class BluetoothDevice extends TypedAtomicActor {
      *  "WirelessInputChannel".
      */
     public StringParameter wirelessInputChannelName;
-    /** The output port for wireless communication, which will output a BluetoothRecordToken.
-     * TODO: Type Description.
+    
+    /** The output port for wireless communication, which will output a BluetoothResponseToken of type General.
+     * 
      */
     public WirelessIOPort wirelessOutput;
     
@@ -159,9 +167,16 @@ public class BluetoothDevice extends TypedAtomicActor {
      *  "WirelessOutputChannel".
      */
     public StringParameter wirelessOutputChannelName;
-    //TODO: fire() documentation
+
     /**
-     * MISSING DOCUMENTATION
+     *
+     * The following switch case structure is the state machine that controls the main dynamics of the
+     * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
+     * perform actions. Each fire() will only evaluate one input, with the wired input, in this case, taking
+     * priority over the wireless input. The wireless input will evaluate with priority ONLY when the device is
+     * in the connected state. The only exception to this case is when a record token with a disconnect command
+     * is received to the wired input.
+     * 
      *  @exception IllegalActionException If there is no director,
      *   or if the parameters cannot be evaluated.
      */
@@ -183,6 +198,8 @@ public class BluetoothDevice extends TypedAtomicActor {
         else {
             _wiredInputToken = new StringToken("empty");
         }
+        
+        //Here we will parse our input command string.
         BluetoothWiredCommand command;
         switch(_wiredInputToken.stringValue()){
             case "switchon":
@@ -233,22 +250,8 @@ public class BluetoothDevice extends TypedAtomicActor {
                 _wiredInputExtra = new StringToken("empty");
             }
             
-            if (wiredInputData.hasToken(0)){
-                _wiredInputData = (ObjectToken) wiredInputData.get(0);
-            }
-            else {
-                _wiredInputData = new ObjectToken("");
-            }
-            /**
-             * The following switch case structure is the state machine that controls the main dynamics of the
-             * Actor. Here, depending on the current state of the actor, we will evaluate tokens at each input and
-             * perform actions. Each fire() will only evaluate one input, with the wired input, in this case, taking
-             * priority over the wireless input. The wireless input will evaluate with priority ONLY when the device is
-             * in the connected state. The only exception to this case is when a record token with a disconnect command
-             * is received to the wired input.
-             * 
-             * TODO: Work in Progress state machine
-             */
+
+            // The state machine
             BluetoothStatusToken status;
 
             switch(state){
@@ -455,8 +458,11 @@ public class BluetoothDevice extends TypedAtomicActor {
                     else if (command.equals(BluetoothWiredCommand.COMMAND_SENDDATA)){
                         if (_wiredInputExtra instanceof StringToken){
                             String deviceToSendData = ((StringToken) _wiredInputExtra).stringValue();
-                            if (this._connectedDevices.contains(deviceToSendData)){
-                                this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_OK, deviceToSendData, this.getName(), _wiredInputData));
+                            if (this._connectedDevices.contains(deviceToSendData) && this.wiredInputData.hasToken(0)){
+                                this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_OK, deviceToSendData, this.getName(), wiredInputData.get(0)));
+                            }
+                            else {
+                                throw new IllegalActionException("Data to send must be specified on port: "+this.wiredInputData.getName());
                             }
                         }
                     }
