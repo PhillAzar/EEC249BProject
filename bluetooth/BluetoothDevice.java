@@ -10,8 +10,10 @@ import java.util.HashSet;
 
 import ptolemy.actor.TypedAtomicActor;
 import ptolemy.actor.TypedIOPort;
+import ptolemy.data.ObjectToken;
 import ptolemy.data.StringToken;
 import ptolemy.data.Token;
+import ptolemy.data.expr.Parameter;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.data.type.BaseType;
 import ptolemy.domains.wireless.kernel.WirelessDirector;
@@ -19,6 +21,7 @@ import ptolemy.domains.wireless.kernel.WirelessIOPort;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
+import ptolemy.kernel.util.StringAttribute;
 
 /**
  * This Actor is simulation of a Bluetooth adapter in a bluetooth enabled device. The simulation is <i>functional<i>,
@@ -69,6 +72,8 @@ public class BluetoothDevice extends TypedAtomicActor {
         _pairedDevices = new HashSet<String>();
         _connectedDevices = new HashSet<String>();
         _discoverable = false;
+
+        
         
         wirelessInputChannelName = new StringParameter(this, "wirelessInputChannelName");
         wirelessInputChannelName.setExpression("WirelessInputChannel");
@@ -77,21 +82,44 @@ public class BluetoothDevice extends TypedAtomicActor {
         wirelessOutputChannelName.setExpression("WirelessOutputChannel");
         
         wiredInput = new TypedIOPort(this, "Wired Input", true, false);
+        new Parameter(wiredInput, "_showName").setExpression("true");
+        
         wiredInputDetails = new TypedIOPort(this, "Wired Input - Detail", true, false);
+        new Parameter(wiredInputDetails, "_showName").setExpression("true");
+        
+        wiredInputData = new TypedIOPort(this, "Wired Input - Data", true, false);
+        new Parameter(wiredInputData, "_showName").setExpression("true");
+        
         wiredOutput = new TypedIOPort(this, "Wired Output", false, true);
+        new Parameter(wiredOutput, "_showName").setExpression("true");
         
         wiredInput.setTypeEquals(BaseType.STRING);
         wiredInputDetails.setTypeEquals(BaseType.STRING);
-        wiredOutput.setTypeEquals(BaseType.GENERAL);
+        wiredOutput.setTypeEquals(BaseType.OBJECT);
         
         wirelessInput = new WirelessIOPort(this, "Wireless Input", true, false);
+        new Parameter(wirelessInput, "_showName").setExpression("true");
+        new StringAttribute(wirelessInput, "_cardinal").setExpression("SOUTH");
         wirelessInput.outsideChannel.setExpression("$wirelessInputChannelName");
         
         wirelessOutput = new WirelessIOPort(this, "Wireless Output", false, true);
+        new Parameter(wirelessOutput, "_showName").setExpression("true");
+        new StringAttribute(wirelessOutput, "_cardinal").setExpression("SOUTH");
         wirelessOutput.outsideChannel.setExpression("$wirelessOutputChannelName");
         
         wirelessInput.setTypeEquals(BaseType.GENERAL);
         wirelessOutput.setTypeEquals(BaseType.GENERAL);
+        
+        _attachText("_iconDescription", "<svg>\n"
+                + "<rect x=\"-30\" y=\"-20\" " + "width=\"60\" height=\"40\" "
+                + "style=\"fill:white\"/>\n"
+                + "<line x1=\"0\" y1=\"-15\" x2=\"0\" y2=\"-13\"/>\n"
+                + "<line x1=\"0\" y1=\"14\" x2=\"0\" y2=\"16\"/>\n"
+                + "<line x1=\"-15\" y1=\"0\" x2=\"-13\" y2=\"0\"/>\n"
+                + "<line x1=\"14\" y1=\"0\" x2=\"16\" y2=\"0\"/>\n"
+                + "<line x1=\"0\" y1=\"-8\" x2=\"0\" y2=\"0\"/>\n"
+                + "<line x1=\"0\" y1=\"0\" x2=\"11.26\" y2=\"-6.5\"/>\n"
+                + "</svg>\n");
         
     }
     
@@ -107,11 +135,15 @@ public class BluetoothDevice extends TypedAtomicActor {
     public TypedIOPort wiredInput;
     
     /**
-     * The input port for details about wired communications, which will contain a device identifier or
-     * data to send. The type for this port is declared as General, but will internally check for either an ObjectToken
-     * or string. 
+     * The input port for details about wired communications, which will contain a device identifier. The type of this port is String.
      */
-    public TypedIOPort wiredInputDetails;   
+    public TypedIOPort wiredInputDetails;
+    
+    /**
+     * The input port for data to be sent. This will only be checked when the command to send data has been issued, and further will only be checked when in the
+     * connected state. This port is of type Object.
+     */
+    public TypedIOPort wiredInputData;
     
     /** The output port for wired communication, which could potentially facilitate communication with other
      * devices/components/actors which are not wireless that interact with this actor.
@@ -153,6 +185,7 @@ public class BluetoothDevice extends TypedAtomicActor {
         
         StringToken _wiredInputToken;
         Token _wiredInputExtra;
+        Token _wiredInputData;
 
         
         if (wiredInput.hasToken(0)){
@@ -184,11 +217,17 @@ public class BluetoothDevice extends TypedAtomicActor {
             case "pair":
                 command = BluetoothWiredCommand.COMMAND_PAIR;
                 break;
+            case "unpair":
+                command = BluetoothWiredCommand.COMMAND_UNPAIR;
+                break;
             case "discoverable":
                 command = BluetoothWiredCommand.COMMAND_DISCOVERABLE;
                 break;
             case "hide":
                 command = BluetoothWiredCommand.COMMAND_HIDE;
+                break;
+            case "senddata":
+                command = BluetoothWiredCommand.COMMAND_SENDDATA;
                 break;
             default:
                 command = BluetoothWiredCommand.COMMAND_NOCOMMAND;
@@ -203,6 +242,13 @@ public class BluetoothDevice extends TypedAtomicActor {
             }
             else {
                 _wiredInputExtra = new StringToken("empty");
+            }
+            
+            if (wiredInputData.hasToken(0)){
+                _wiredInputData = (ObjectToken) wiredInputData.get(0);
+            }
+            else {
+                _wiredInputData = new ObjectToken("");
             }
             /**
              * The following switch case structure is the state machine that controls the main dynamics of the
@@ -416,6 +462,14 @@ public class BluetoothDevice extends TypedAtomicActor {
                         status = new BluetoothStatusToken(BluetoothStatus.STATUS_OK, "empty");
                         this.wiredOutput.send(0, status);
                         break;
+                    }
+                    else if (command.equals(BluetoothWiredCommand.COMMAND_SENDDATA)){
+                        if (_wiredInputExtra instanceof StringToken){
+                            String deviceToSendData = ((StringToken) _wiredInputExtra).stringValue();
+                            if (this._connectedDevices.contains(deviceToSendData)){
+                                this.wirelessOutput.send(0, new BluetoothResponseToken(BluetoothResponse.RESPONSE_OK, deviceToSendData, this.getName(), _wiredInputData));
+                            }
+                        }
                     }
                     while(this.wirelessInput.hasToken(0)){
                         Token _token = wirelessInput.get(0);

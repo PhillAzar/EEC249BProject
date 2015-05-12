@@ -18,5 +18,6 @@ public enum BluetoothWiredCommand {
     COMMAND_UNPAIR,
     COMMAND_DISCOVERABLE,
     COMMAND_HIDE,
+    COMMAND_SENDDATA,
     COMMAND_NOCOMMAND
 }
